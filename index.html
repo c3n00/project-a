@@ -128,13 +128,14 @@
         // 좌석 수
         const totalSeats = 47;
         let seatStatus = {};
-        // 날짜가 바뀌면 localStorage 초기화
-        const today = new Date().toISOString().slice(0,10);
-        if(localStorage.getItem('seat_date') !== today) {
-            localStorage.setItem('seat_status', JSON.stringify({}));
-            localStorage.setItem('seat_date', today);
+
+        // 좌석 현황 서버에서 받아오기
+        async function fetchSeats() {
+            const res = await fetch('/api/seats');
+            seatStatus = await res.json();
+            renderSeats();
         }
-        seatStatus = JSON.parse(localStorage.getItem('seat_status')) || {};
+
         // 좌석 렌더링
         function renderSeats() {
             let reserved = 0;
@@ -142,7 +143,6 @@
                 const seatNum = cell.dataset.seat;
                 if(seatStatus[seatNum]) {
                     cell.classList.add('reserved');
-                    // 교시 정보 표시
                     const start = 1;
                     const end = seatStatus[seatNum].endPeriod || 1;
                     const info = `${start}교시~${end}교시`;
@@ -156,6 +156,7 @@
             document.getElementById('available-count').textContent = totalSeats - reserved;
             document.getElementById('reserved-count').textContent = reserved;
         }
+
         // 좌석 클릭 이벤트
         document.querySelectorAll('.seat-cell').forEach(cell => {
             cell.onclick = function() {
@@ -164,26 +165,27 @@
                 openModal(seatNum);
             };
         });
+
         // 모달 열기/닫기/예약
         function openModal(seatNum) {
             document.getElementById('modal').style.display = 'block';
-            document.getElementById('reserve-form').onsubmit = function(e) {
+            document.getElementById('reserve-form').onsubmit = async function(e) {
                 e.preventDefault();
                 const id = document.getElementById('student-id').value;
                 const name = document.getElementById('student-name').value;
                 const endPeriod = document.getElementById('study-end').value;
-                // 이미 예약된 학번인지 확인
-                for (const key in seatStatus) {
-                    if (seatStatus[key].id === id) {
-                        alert('이미 예약한 좌석이 있습니다. 한 사람당 하나의 좌석만 예약할 수 있습니다.');
-                        return;
-                    }
-                }
-                if(id && name && endPeriod) {
-                    seatStatus[seatNum] = {id, name, endPeriod};
-                    localStorage.setItem('seat_status', JSON.stringify(seatStatus));
-                    renderSeats();
+                // 서버에 예약 요청
+                const res = await fetch('/api/reserve', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({seatNum, id, name, endPeriod})
+                });
+                const result = await res.json();
+                if(result.success) {
                     closeModal();
+                    fetchSeats();
+                } else {
+                    alert(result.msg || '예약에 실패했습니다.');
                 }
             };
         }
@@ -195,7 +197,12 @@
         window.onclick = function(event) {
             if(event.target == document.getElementById('modal')) closeModal();
         };
-        renderSeats();
+
+        // 페이지 로드시 무조건 모달 닫기
+        window.onload = function() {
+            document.getElementById('seatmap-modal').style.display = 'none';
+            fetchSeats();
+        };
     </script>
     <!-- 좌석표 모달 -->
     <div id="seatmap-modal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;">
