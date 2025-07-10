@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>부용고 꿈 키움터 좌석현황표</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1 class="main-title">부용고 꿈 키움터 좌석현황표</h1>
+    <div class="seat-info">
+        이용 가능한 좌석: <span id="available-count"></span> / 예약된 좌석: <span id="reserved-count"></span>
+    </div>
+    <div style="overflow-x:auto; display:flex; justify-content:center;">
+    <table class="seat-table">
+        <tbody>
+            <tr>
+                <td></td><td></td><td></td><td></td>
+                <td class="seat-cell" data-seat="13"></td>
+                <td class="seat-cell" data-seat="12"></td>
+                <td class="seat-cell" data-seat="11"></td>
+                <td class="seat-cell" data-seat="10"></td>
+                <td class="seat-cell" data-seat="9"></td>
+                <td class="seat-cell" data-seat="8"></td>
+                <td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td class="seat-cell" data-seat="14"></td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                <td></td><td></td><td class="seat-cell" data-seat="7"></td>
+            </tr>
+            <tr>
+                <td class="seat-cell" data-seat="15"></td>
+                <td></td>
+                <td class="seat-cell" data-seat="28"></td>
+                <td class="seat-cell" data-seat="33"></td>
+                <td></td><td></td><td></td><td></td><td></td>
+                <td class="seat-cell" data-seat="38"></td>
+                <td class="seat-cell" data-seat="43"></td>
+                <td></td>
+                <td></td><td class="seat-cell" data-seat="6"></td>
+            </tr>
+            <tr>
+                <td class="seat-cell" data-seat="16"></td>
+                <td></td>
+                <td class="seat-cell" data-seat="29"></td>
+                <td class="seat-cell" data-seat="34"></td>
+                <td></td><td></td><td></td><td></td><td></td>
+                <td class="seat-cell" data-seat="39"></td>
+                <td class="seat-cell" data-seat="44"></td>
+                <td></td>
+                <td></td><td class="seat-cell" data-seat="5"></td>
+            </tr>
+            <tr>
+                <td class="seat-cell" data-seat="17"></td>
+                <td></td>
+                <td class="seat-cell" data-seat="30"></td>
+                <td class="seat-cell" data-seat="35"></td>
+                <td></td><td></td><td></td><td></td><td></td>
+                <td class="seat-cell" data-seat="40"></td>
+                <td class="seat-cell" data-seat="45"></td>
+                <td></td>
+                <td></td><td class="seat-cell" data-seat="4"></td>
+            </tr>
+            <tr>
+                <td class="seat-cell" data-seat="18"></td>
+                <td></td>
+                <td class="seat-cell" data-seat="31"></td>
+                <td class="seat-cell" data-seat="36"></td>
+                <td></td><td></td><td></td><td></td><td></td>
+                <td class="seat-cell" data-seat="41"></td>
+                <td class="seat-cell" data-seat="46"></td>
+                <td></td>
+                <td></td><td class="seat-cell" data-seat="3"></td>
+            </tr>
+            <tr>
+                <td class="seat-cell" data-seat="19"></td>
+                <td></td>
+                <td class="seat-cell" data-seat="32"></td>
+                <td class="seat-cell" data-seat="37"></td>
+                <td></td><td></td><td></td><td></td><td></td>
+                <td class="seat-cell" data-seat="42"></td>
+                <td class="seat-cell" data-seat="47"></td>
+                <td></td>
+                <td></td><td class="seat-cell" data-seat="2"></td>
+            </tr>
+            <tr>
+                <td class="seat-cell" data-seat="20"></td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                <td></td><td></td><td class="seat-cell" data-seat="1"></td>
+            </tr>
+            <tr>
+                <td class="seat-cell" data-seat="21"></td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td class="seat-cell" data-seat="22"></td>
+                <td></td><td></td><td></td><td></td>
+                <td class="seat-cell" data-seat="23"></td>
+                <td class="seat-cell" data-seat="24"></td>
+                <td class="seat-cell" data-seat="25"></td>
+                <td class="seat-cell" data-seat="26"></td>
+                <td class="seat-cell" data-seat="27"></td>
+                <td></td><td></td><td></td><td></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+    <!-- 예약 모달 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span id="close-modal" class="close">&times;</span>
+            <h2>좌석 예약</h2>
+            <form id="reserve-form">
+                <label>학번: <input type="text" id="student-id" required></label><br>
+                <label>이름: <input type="text" id="student-name" required></label><br>
+                <label>몇 교시까지 자습할 건가요?
+                  <select id="study-end" required>
+                    <option value="1">1교시</option>
+                    <option value="2">2교시</option>
+                    <option value="3">3교시</option>
+                  </select>
+                </label><br>
+                <button type="submit">예약</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        // 좌석 수
+        const totalSeats = 47;
+        let seatStatus = {};
+        // 날짜가 바뀌면 localStorage 초기화
+        const today = new Date().toISOString().slice(0,10);
+        if(localStorage.getItem('seat_date') !== today) {
+            localStorage.setItem('seat_status', JSON.stringify({}));
+            localStorage.setItem('seat_date', today);
+        }
+        seatStatus = JSON.parse(localStorage.getItem('seat_status')) || {};
+        // 좌석 렌더링
+        function renderSeats() {
+            let reserved = 0;
+            document.querySelectorAll('.seat-cell').forEach(cell => {
+                const seatNum = cell.dataset.seat;
+                if(seatStatus[seatNum]) {
+                    cell.classList.add('reserved');
+                    // 교시 정보 표시
+                    const start = 1;
+                    const end = seatStatus[seatNum].endPeriod || 1;
+                    const info = `${start}교시~${end}교시`;
+                    cell.innerHTML = seatNum + '<br><span class="seat-period">' + info + '</span>';
+                    reserved++;
+                } else {
+                    cell.classList.remove('reserved');
+                    cell.textContent = seatNum;
+                }
+            });
+            document.getElementById('available-count').textContent = totalSeats - reserved;
+            document.getElementById('reserved-count').textContent = reserved;
+        }
+        // 좌석 클릭 이벤트
+        document.querySelectorAll('.seat-cell').forEach(cell => {
+            cell.onclick = function() {
+                const seatNum = this.dataset.seat;
+                if(seatStatus[seatNum]) return;
+                openModal(seatNum);
+            };
+        });
+        // 모달 열기/닫기/예약
+        function openModal(seatNum) {
+            document.getElementById('modal').style.display = 'block';
+            document.getElementById('reserve-form').onsubmit = function(e) {
+                e.preventDefault();
+                const id = document.getElementById('student-id').value;
+                const name = document.getElementById('student-name').value;
+                const endPeriod = document.getElementById('study-end').value;
+                // 이미 예약된 학번인지 확인
+                for (const key in seatStatus) {
+                    if (seatStatus[key].id === id) {
+                        alert('이미 예약한 좌석이 있습니다. 한 사람당 하나의 좌석만 예약할 수 있습니다.');
+                        return;
+                    }
+                }
+                if(id && name && endPeriod) {
+                    seatStatus[seatNum] = {id, name, endPeriod};
+                    localStorage.setItem('seat_status', JSON.stringify(seatStatus));
+                    renderSeats();
+                    closeModal();
+                }
+            };
+        }
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('reserve-form').reset();
+        }
+        document.getElementById('close-modal').onclick = closeModal;
+        window.onclick = function(event) {
+            if(event.target == document.getElementById('modal')) closeModal();
+        };
+        renderSeats();
+    </script>
+    <!-- 좌석표 모달 -->
+    <div id="seatmap-modal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;">
+        <div id="seatmap-modal-content" class="modal-content" style="display:block; background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.18); padding:0; position:relative; overflow:auto; max-width:none; width:auto; height:auto;">
+            <span id="close-seatmap" class="close" style="position:absolute; top:10px; right:16px; font-size:2em; cursor:pointer; z-index:2;">&times;</span>
+            <img id="seatmap-img" src="{{ url_for('static', filename='seatmap.jpg') }}" alt="좌석표 이미지" style="max-width:200px; max-height:200px; width:auto; height:auto; display:block; object-fit:contain; border:1px solid #ccc; background:#fff; border-radius:8px; margin:0; cursor:zoom-in; transition:all 0.2s;"/>
+        </div>
+    </div>
+    <button id="show-seatmap" style="position:fixed; right:30px; bottom:30px; z-index:1000; padding:12px 24px; font-size:1.1em; border-radius:8px; border:none; background:#2d72d9; color:white; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.15);">좌석표 보기</button>
+    <script>
+        // 페이지 로드시 무조건 모달 닫기
+        window.onload = function() {
+            document.getElementById('seatmap-modal').style.display = 'none';
+        };
+        // 좌석표 모달 열기/닫기
+        document.getElementById('show-seatmap').onclick = function() {
+            document.getElementById('seatmap-modal').style.display = 'flex';
+        };
+        document.getElementById('close-seatmap').onclick = function() {
+            document.getElementById('seatmap-modal').style.display = 'none';
+            shrinkSeatmap();
+        };
+        window.addEventListener('click', function(event) {
+            if(event.target == document.getElementById('seatmap-modal')) {
+                document.getElementById('seatmap-modal').style.display = 'none';
+                shrinkSeatmap();
+            }
+        });
+        // 썸네일/확대 토글
+        const seatmapImg = document.getElementById('seatmap-img');
+        const seatmapModalContent = document.getElementById('seatmap-modal-content');
+        let isZoomed = false;
+        seatmapImg.onclick = function(e) {
+            e.stopPropagation();
+            if (!isZoomed) {
+                seatmapImg.style.maxWidth = '90vw';
+                seatmapImg.style.maxHeight = '90vh';
+                seatmapImg.style.width = 'auto';
+                seatmapImg.style.height = 'auto';
+                seatmapImg.style.cursor = 'zoom-out';
+                seatmapModalContent.style.maxWidth = 'none';
+                seatmapModalContent.style.width = 'auto';
+                seatmapModalContent.style.height = 'auto';
+                isZoomed = true;
+            } else {
+                shrinkSeatmap();
+            }
+        };
+        function shrinkSeatmap() {
+            seatmapImg.style.maxWidth = '200px';
+            seatmapImg.style.maxHeight = '200px';
+            seatmapImg.style.width = 'auto';
+            seatmapImg.style.height = 'auto';
+            seatmapImg.style.cursor = 'zoom-in';
+            seatmapModalContent.style.maxWidth = 'none';
+            seatmapModalContent.style.width = 'auto';
+            seatmapModalContent.style.height = 'auto';
+            isZoomed = false;
+        }
+    </script>
+</body>
+</html> 
